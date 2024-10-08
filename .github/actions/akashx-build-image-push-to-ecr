@@ -1,0 +1,48 @@
+name: Build and Push Doris FE from Binary
+
+on:
+  workflow_dispatch:  # Allows manual triggering from the GitHub interface.
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REPOSITORY_FE: doris-fe
+      DORIS_VERSION: 1.2.3  # Replace with the desired Doris version
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: ${{ env.AWS_REGION }}
+
+      # Step 4: Download Doris FE binary
+      - name: Download Doris FE binary
+        run: |
+          wget https://downloads.apache.org/doris/${{ env.DORIS_VERSION }}/apache-doris-${{ env.DORIS_VERSION }}-fe.tar.gz -O doris-fe.tar.gz
+
+          mkdir doris-fe
+          tar -xzvf doris-fe.tar.gz -C doris-fe --strip-components=1
+
+      # Step 5: Build and push Doris FE Docker image using the Dockerfile in the repository
+      - name: Build and Push Doris FE
+        run: |
+          IMAGE_URI_FE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_FE:latest
+          
+          # Build the Docker image for Doris FE using the Dockerfile in the repository
+          docker build -t $IMAGE_URI_FE -f path/to/Dockerfile.fe .
+          
+          # Push the Docker image for Doris FE to ECR
+          docker push $IMAGE_URI_FE
