@@ -1,5 +1,8 @@
 name: Build and Push Doris FE from Binary
 
+#
+# POC GHA workflow script to build the image and push to a container registry (ECR)
+#
 on:
   workflow_dispatch:  # Allows manual triggering from the GitHub interface.
 
